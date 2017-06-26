@@ -27,8 +27,11 @@ import static org.mockito.Mockito.mock;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+
+import javax.annotation.Nullable;
 
 import org.junit.Assert;
 import org.mockito.invocation.InvocationOnMock;
@@ -78,7 +81,7 @@ public class MockCxxCompilerSensor extends CxxCompilerSensor {
 
   @Override
   public void saveUniqueViolation(SensorContext context, String ruleRepoKey, String file,
-      String line, String ruleId, String msg) {
+      String line, String ruleId, String msg, @Nullable Iterable<HashMap<String, String>> flowLocations) {
     
     CompilerParser.Warning w = new CompilerParser.Warning(file, line, ruleId, msg);
     savedWarnings.add(w);

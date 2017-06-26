@@ -21,6 +21,7 @@ package org.sonar.cxx.sensors.utils;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.ArrayList;
@@ -230,10 +231,11 @@ public abstract class CxxReportSensor implements Sensor {
      * @param msg
    */
   public void saveUniqueViolation(SensorContext sensorContext, String ruleRepoKey,
-                                  @Nullable String file, @Nullable String line, String ruleId, String msg) {
+                                  @Nullable String file, @Nullable String line, String ruleId, String msg,
+                                  @Nullable Iterable<HashMap<String, String>> flowLocations) {
     // StringBuilder is slower
     if (uniqueIssues.add(file + line + ruleId + msg)) { 
-      saveViolation(sensorContext, ruleRepoKey, file, line, ruleId, msg);
+      saveViolation(sensorContext, ruleRepoKey, file, line, ruleId, msg, flowLocations);
     }
   }
 
@@ -245,7 +247,8 @@ public abstract class CxxReportSensor implements Sensor {
    * file-level)
    */
   private void saveViolation(SensorContext sensorContext, String ruleRepoKey, 
-                            @Nullable String filename, @Nullable String line, String ruleId, String msg) {
+                            @Nullable String filename, @Nullable String line, String ruleId, String msg,
+                            @Nullable Iterable<HashMap<String, String>> flowLocations) {
     // handles file="" situation -- file level
     if ((filename != null) && (!filename.isEmpty())) {
       String root = sensorContext.fileSystem().baseDir().getAbsolutePath();
@@ -267,6 +270,43 @@ public abstract class CxxReportSensor implements Sensor {
               .message(msg);
 
             newIssue.at(location);
+
+            LOG.debug("*********************");
+            LOG.debug(normalPath);
+            LOG.debug(String.valueOf(lineNr));
+            LOG.debug(msg);
+            LOG.debug("*********************");
+
+            // Add extra flow related information
+            if (flowLocations != null) {
+              List<NewIssueLocation> flowLocs =  new ArrayList<NewIssueLocation>();
+              LOG.debug("Converting flow info");
+              for (HashMap<String, String> floc: flowLocations){
+                String fpath = floc.get("file");
+                InputFile iFile = sensorContext.fileSystem().inputFile(sensorContext.fileSystem()
+                                                                .predicates().hasAbsolutePath(fpath));
+                String l = floc.get("line");
+                String m = floc.get("message");
+                int maxLines = iFile.lines();
+                int lnr = getLineAsInt(l, maxLines);
+
+                //TextRange range = inputFile.newRange(token.getLine(), token.getColumn(),
+                //                                    token.getLine(), token.getColumn() + token.getValue().length());
+
+                NewIssueLocation loc = newIssue.newLocation()
+                  .on(iFile)
+                  .at(iFile.selectLine(lnr > 0 ? lnr : 1))
+                  .message(m);
+                LOG.debug("===================");
+                LOG.debug(fpath);
+                LOG.debug(l);
+                LOG.debug(m);
+                LOG.debug("===================");
+                flowLocs.add(loc);
+              }
+              newIssue.addFlow(flowLocs);
+            }
+
             newIssue.save();
             violationsCount++;
           } catch (RuntimeException ex) {

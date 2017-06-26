@@ -88,7 +88,7 @@ public class CxxVeraxxSensor extends CxxReportSensor {
                 String source = errorCursor.getAttrValue("source");
 
                 saveUniqueViolation(context, CxxVeraxxRuleRepository.KEY,
-                  name, line, source, message);
+                  name, line, source, message, null);
               } else {
                 if (LOG.isDebugEnabled()) {
                   LOG.debug("Error in file '{}', with message '{}'",

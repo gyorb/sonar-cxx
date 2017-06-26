@@ -68,7 +68,7 @@ public class CxxClangSASensorTest {
     CxxClangSASensor sensor = new CxxClangSASensor(language);
     context.fileSystem().add(new DefaultInputFile("myProjectKey", "src/lib/component1.cc").setLanguage("cpp").initMetadata(new String("asd\nasdas\nasda\n")));
     sensor.execute(context);
-    assertThat(context.allIssues()).hasSize(2);
+    assertThat(context.allIssues()).hasSize(1);
   }
 
   @Test

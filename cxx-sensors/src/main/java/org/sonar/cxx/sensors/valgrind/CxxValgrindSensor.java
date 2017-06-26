@@ -66,7 +66,7 @@ public class CxxValgrindSensor extends CxxReportSensor {
       ValgrindFrame frame = error.getLastOwnFrame(context.fileSystem().baseDir().getPath());
       if (frame != null) {
         saveUniqueViolation(context, CxxValgrindRuleRepository.KEY,
-          frame.getPath(), frame.getLine(), error.getKind(), error.toString());
+          frame.getPath(), frame.getLine(), error.getKind(), error.toString(), null);
       } else {
         LOG.warn("Cannot find a project file to assign the valgrind error '{}' to", error);
       }

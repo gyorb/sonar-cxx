@@ -20,9 +20,9 @@
 package org.sonar.cxx.sensors.pclint;
 
 import java.io.File;
+
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import javax.annotation.Nullable;
 import javax.xml.stream.XMLStreamException;
 
@@ -104,7 +104,7 @@ public class CxxPCLintSensor extends CxxReportSensor {
                 }
               }
               saveUniqueViolation(context, CxxPCLintRuleRepository.KEY,
-                file, line, id, msg);
+                file, line, id, msg, null);
               
             }
             else {

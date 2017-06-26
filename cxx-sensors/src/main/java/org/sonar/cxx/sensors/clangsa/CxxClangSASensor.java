@@ -22,8 +22,16 @@ package org.sonar.cxx.sensors.clangsa;
 import java.io.File;
 import java.io.IOException;
 import java.text.ParseException;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Dictionary;
+import java.util.HashMap;
+
 import javax.xml.parsers.ParserConfigurationException;
 
+import org.sonar.api.batch.fs.InputComponent;
+import org.sonar.api.batch.fs.InputFile;
+import org.sonar.api.batch.fs.TextRange;
 import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.batch.sensor.SensorDescriptor;
 import org.sonar.api.utils.log.Logger;
@@ -68,6 +76,71 @@ public class CxxClangSASensor extends CxxReportSensor {
     descriptor.onlyOnLanguage(this.language.getKey()).name(language.getName() + " ClangSASensor");
   }
 
+  List< HashMap<String, String> > getFlowLocations(final SensorContext context, NSObject[] reportPath, NSObject[] sourceFiles){
+
+    // TODO: reverse the list for better understanding!!!
+
+    List<HashMap<String, String>> flowLocations =new ArrayList<HashMap<String, String>>();  
+
+    for(NSObject p:reportPath){
+      //LOG.error(p.toString());
+      NSDictionary nd = (NSDictionary)p;
+      //LOG.error(nd.toString());
+      //LOG.error(nd.toASCIIPropertyList());
+
+      String kind = ((NSString)nd.get("kind")).getContent();
+      // We are only interested in the events.
+      // control types are skipped for now.
+      if (kind.equals("event")){
+        LOG.error("EVENT EVENT");
+        String message = ((NSString)nd.get("message")).getContent();
+        NSDictionary loc = (NSDictionary)nd.get("location");
+
+        Integer line = ((NSNumber)loc.get("line")).intValue();
+        Integer col = ((NSNumber)loc.get("col")).intValue();
+        NSNumber fileIndex = (NSNumber)loc.get("file");
+        NSObject filePath = sourceFiles[fileIndex.intValue()];
+        String normalPath = ((NSString)filePath).getContent();
+
+        LOG.debug("ADDING FLOW");
+        LOG.debug("-----------------");
+        LOG.debug(message);
+        LOG.debug(line.toString());
+        LOG.debug(col.toString());
+        LOG.debug(normalPath);
+        //NSArray rngs = (NSArray)nd.get("ranges");
+        //LOG.debug(rngs.toASCIIPropertyList());
+        //LOG.debug(String.valueOf(rngs.count()));
+
+        // There is at least on range for events.
+        // NSObject range = rngs.objectAtIndex(0);
+        // NSObject startPos = ((NSArray)range).objectAtIndex(0);
+        // NSObject endPos = ((NSArray)range).objectAtIndex(1);
+
+        //LOG.debug(String.valueOf(startPos.get("line")));
+        //LOG.debug(String.valueOf(startPos.get("col")));
+        //LOG.debug(startPos.get("file"));
+        
+        //LOG.debug(String.valueOf(endPos.get("line")));
+        //LOG.debug(String.valueOf(endPos.get("col")));
+        //LOG.debug(endPos.get("file"));
+
+        LOG.debug("-----------------");
+
+        HashMap<String, String> flowSection = new HashMap<String, String>();
+        flowSection.put("message", message);
+        flowSection.put("line", line.toString());
+        flowSection.put("file", normalPath);
+
+        flowLocations.add(flowSection);
+      }
+
+    }
+
+    return flowLocations;
+  }
+  
+
   @Override
   protected void processReport(final SensorContext context, File report)
     throws javax.xml.stream.XMLStreamException {
@@ -100,12 +173,36 @@ public class CxxClangSASensor extends CxxReportSensor {
 
         NSObject filePath = sourceFiles[fileIndex.intValue()];
 
-        saveUniqueViolation(context,
-            CxxClangSARuleRepository.KEY,
-            ((NSString)filePath).getContent(),
-            line.toString(),
-            checkerName,
-            description);
+        NSObject[] reportPath = ((NSArray)diag.objectForKey("path")).getArray();
+
+        List<HashMap<String, String>> flowLocations = getFlowLocations(context, reportPath, sourceFiles);
+        
+        LOG.debug("Collected flow info");
+        for (HashMap<String, String> l: flowLocations){
+          LOG.debug(l.get("line"));
+          LOG.debug(l.get("file"));
+          LOG.debug(l.get("message"));
+        }
+
+        if (flowLocations.size() > 1){
+          LOG.debug("LONG LONG FLOW");
+          saveUniqueViolation(context,
+              CxxClangSARuleRepository.KEY,
+              ((NSString)filePath).getContent(),
+              line.toString(),
+              checkerName,
+              description,
+              flowLocations);
+        } else {
+          saveUniqueViolation(context,
+              CxxClangSARuleRepository.KEY,
+              ((NSString)filePath).getContent(),
+              line.toString(),
+              checkerName,
+              description,
+              null);
+
+        }
 
       }
     } catch (final java.io.IOException

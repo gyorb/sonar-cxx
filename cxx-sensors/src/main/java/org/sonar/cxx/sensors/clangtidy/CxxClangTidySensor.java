@@ -83,7 +83,8 @@ public class CxxClangTidySensor extends CxxReportSensor {
                   path,
                   lineId,
                   check,
-                  message);
+                  message,
+                  null);
         }
       }
     } catch (final java.io.FileNotFoundException

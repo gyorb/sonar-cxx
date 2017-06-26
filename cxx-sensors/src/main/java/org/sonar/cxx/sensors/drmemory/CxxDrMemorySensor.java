@@ -80,13 +80,13 @@ public class CxxDrMemorySensor extends CxxReportSensor {
       if (error.stackTrace.isEmpty()) {
         saveUniqueViolation(context, CxxDrMemoryRuleRepository.KEY,
                 null, null,
-                error.type.getId(), error.message);
+                error.type.getId(), error.message, null);
       }
       for (Location errorLocation : error.stackTrace) {
         if (isFileInAnalysis(context, errorLocation)) {
           saveUniqueViolation(context, CxxDrMemoryRuleRepository.KEY,
                   errorLocation.file, errorLocation.line.toString(),
-                  error.type.getId(), error.message);
+                  error.type.getId(), error.message, null);
           break;
         }
       }

@@ -85,7 +85,7 @@ public class CxxRatsSensor extends CxxReportSensor {
           for (Element lineElem : lines) {
             String line = lineElem.getTextTrim();
             saveUniqueViolation(context, CxxRatsRuleRepository.KEY,
-              fileName, line, type, message);
+              fileName, line, type, message, null);
           }
         }
       }

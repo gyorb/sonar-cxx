@@ -102,7 +102,7 @@ public class CxxOtherSensor extends CxxReportSensor {
           String id = errorCursor.getAttrValue("id");
           String msg = errorCursor.getAttrValue("msg");
 
-          saveUniqueViolation(context, CxxOtherRepository.KEY, file, line, id, msg);
+          saveUniqueViolation(context, CxxOtherRepository.KEY, file, line, id, msg, null);
         }
       }
     });
